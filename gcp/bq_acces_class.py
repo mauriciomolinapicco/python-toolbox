@@ -15,9 +15,16 @@ class BigQueryConnection:
         self._env = self.get_environment()
         self._credentials = self._get_credentials()
         self.client = bigquery.Client(
-            project="project_id",
+            project="meli-bi-data",
             credentials=self._credentials
         )
+
+    """ dunder methods para poder ingresar con context manager"""
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        LOGGER.info("Closing BigQuery connection")
 
     def get_environment(self):
         try:
@@ -58,7 +65,6 @@ class BigQueryConnection:
             query_job = self.client.query(sql, **kwargs)
             result = query_job.result()
             df = result.to_dataframe()
-            df["timestamp"] = df["timestamp"].astype(str)  
             return df
         except GoogleAPICallError as e:
             LOGGER.error(f"BigQuery error: {e}")
